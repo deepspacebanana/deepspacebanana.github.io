@@ -44,7 +44,7 @@ If you would like a deepdive on distance Fields and their uses I highly reccomen
 
 <P> Now we are going to use a Time Variable to Scale this Sphere Over Times </p>
 
-<img src="{{page.img_path}}/DF_Scaling_Nodes.PNG" width="1024">
+<img src="{{page.img_path}}/DF_Scaling_Nodes.png" width="1024">
 <p>This will result in something like this</p>
 <img src="{{page.img_path}}/DF_Scaling.gif" width="1024">
 
@@ -52,7 +52,7 @@ If you would like a deepdive on distance Fields and their uses I highly reccomen
 
 <p>This is good progress, but this does not work for out effect, we need a scaling ring. This can be easily accomplished with a little bit of math on our current result.</p>
 
-<img src="{{page.img_path}}/Edge_Mask.PNG" width="1024">
+<img src="{{page.img_path}}/Edge_Mask.png" width="1024">
 This will give us what we want, basically a growing ring, with a nice gradient falloff which can be controlled.
 <img src="{{page.img_path}}/Edge_Mask.gif" width="1024">
 
@@ -63,7 +63,7 @@ This will give us what we want, basically a growing ring, with a nice gradient f
 <p>The nest step is to use some noise, to create some interesting variation to the ring</p>
 <p>For this we make use of UE4's "Vector Noise Node", you can read more about it <A Href"https://docs.unrealengine.com/latest/INT/Engine/Rendering/Materials/ExpressionReference/Vector/#vectornoise">here</A>, you could alternatively just use a custom noise texture that has WorldALigned UV COordinates</p>
 <p>In my Shader I set the Vector Noise Node to use "CellNoise", feel free to experiment with other nosie types to get you own unique effect</p>
-<img src="{{page.img_path}}/DF_Noise.PNG" width="1024">
+<img src="{{page.img_path}}/DF_Noise.png" width="1024">
 The result will look something like this
 <img src="{{page.img_path}}/DF_Noise.gif" width="1024">
 <p>This concludes the First Step of our shader, next we will look at the Implementing the Sobel-Edge Function</p>
@@ -107,14 +107,14 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 
 <p>In UE4 it looks like this:</p>
 
-<img src="{{page.img_path}}/SobelEdge_Nodes.PNG" width="1024">
+<img src="{{page.img_path}}/SobelEdge_Nodes.png" width="1024">
 
 <p>A few notes about this setup make sure that your "SceneTexture" nodes are set to use "PostProcessInput0"</p>
 
-<img src="{{page.img_path}}/SceneTexture_Settings.PNG" width="512">
+<img src="{{page.img_path}}/SceneTexture_Settings.png" width="512">
 
 <p>The two Custom Nodes GradX and Grady, use the following:</p>
-<img src="{{page.img_path}}/Sobel_Edge_Custom.PNG" width="512">
+<img src="{{page.img_path}}/Sobel_Edge_Custom.png" width="512">
 <ul>
 <li><p>GradX:</li>
 <xmp>
@@ -128,26 +128,26 @@ return TL + 2.0 * TM + TR - BL - 2.0 * BM - BR;
 <p>This does not necessarily have to be done with a custom node, i used it merely for convenience sake, as otherwise it would have been too much node spaghetti.</p>
 
 <p>If you plug in the end result of this Node Network to the emissive channel, you will see somthing like this in your Viewport</p>
-<img src="{{page.img_path}}/SobelEdge.PNG" width="1024">
+<img src="{{page.img_path}}/SobelEdge.png" width="1024">
 <img src="{{page.img_path}}/EdgeTinted.jpg" width="1024">
 
 <P>We also multiply this result with a simple Vector3 so that we can tint the edges whatever color we want</p>
-<img src="{{page.img_path}}/EdgeTint.PNG" width="1024">
+<img src="{{page.img_path}}/EdgeTint.png" width="1024">
 
 <H4>World-Aligned Grid Texture</H4>
 <P> This part is easy we just use a simple grid texture and make it world aligned, and later combine it with the sobel-edge fucntion to get a cool BluePrint graph type effect</p>
-<img src="{{page.img_path}}/WorldAlignedGrid.PNG" width="1024">
+<img src="{{page.img_path}}/WorldAlignedGrid.png" width="1024">
 <P>If you plug this into the emissive, it looks like this</P>
-<img src="{{page.img_path}}/WorldGrid.PNG" width="1024">
+<img src="{{page.img_path}}/WorldGrid.png" width="1024">
 
 <H4>Bringing it All Together! </H4>
 
 <p>Now we will bring all three parts together, for the final Effect!</p>
 <p>First we will combine the Sobel-Edge function and the World-Aligned Grid Function by adding them together</p>
-<img src="{{page.img_path}}/SW.PNG" width="512">
+<img src="{{page.img_path}}/SW.png" width="512">
 <P>Next we create a sceneTexture Node and add the result from the sobeledge and World Grid to it</p>
 <P>Then we Interpolate between the regular sceneTexture and the Added one, using the result of the scaling ring mask we created in the first part</P>
-<img src="{{page.img_path}}/FinalCombine.PNG" width="1024">
+<img src="{{page.img_path}}/FinalCombine.png" width="1024">
 <P>And voila we are done, The end result will look something like this. You can of course tweak the parameters and try changing some values to get different results</P>
 <img src="{{page.img_path}}/FinalResult.gif" width="1024">
 <P>I hope you found this informative, cheers</P>
