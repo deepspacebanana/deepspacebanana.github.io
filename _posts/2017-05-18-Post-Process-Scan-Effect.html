@@ -1,0 +1,162 @@
+---
+layout: post
+title:  "Post Process Scan Effect"
+date:   2017-05-18 16:54:46
+author: Taizyd Korambayil
+categories: 
+- blog
+- Shader
+- Art
+- Unreal Engine
+img: post04.gif
+thumb: thumb02.jpg
+img_path: /../assets/img/blog/post02_img
+---
+
+<p> I got some free time this weekend in between school-work, and I decided to go back to doing some shader doodles, I came up with the Post-Process Scan Effect. I imagine it
+being used in a game as some sort distance based scan Effect.And we also use some simple noise distortion to make the scan effect look a little more interesting</p><!--more-->
+<p style="color:red;">Note:If any of the images are not clear you can right-click and open in a new tab to view a Higher Resolution Version</p>
+
+<p>In this section I'm going to breakdown how this effect was made in UE4, now there are multiple ways you could approach creating an effect like this, this jsut happens to be the method that I chose</p>
+
+<H4> High Level Components  </H4>
+<p>The basic idea behind this effect is to create a sobel-edge/modified version of the scene render and then blend it between the regular scene render based on a World-Space Sphere mask, and this mask is animated to create the scanning effect. </p>
+<p> This effect is primarily a combination of 3 main pieces</p>
+<ul>
+<li>A Scaling Distance Field Sphere Mask</li>
+<li>Sobel-Edge Post PRocess Function(I wont be expalining how this function works as it is a topic of its own, but I shall link the code I referenced)</li>
+<li>World Projected Grid Texture Overlay</li>
+</ul>
+
+<H4> Scaling Distance Field Sphere </H4>
+This deals with how we create the scaling sphere mask, we make use of a simple distance Field equation to create a sphere, here's how it works.
+ 
+<img src="{{page.img_path}}/DF_01_Nodes.JPG" width="1024">
+
+Plug in the result of the clamp into the emissive output of your Post-Process Material, and u will see something like this in your viewport.
+
+<img src="{{page.img_path}}/DF_01.JPG" width="1024">
+
+<P>"TexLoc" is a vector3 that defines the location of the origin of the sphere, in my case I have it being read from a Parameter Collection, so that it can be read from gmeplay to use for eg the Player Position, but this value basically represents the location of the center of the sphere mask.</P>
+
+<P>The bbove bit of "Node-Code" basically defines a Distance Field Sphere with a radius of 1024 units, I used the clamp jsut to show the result in the viewport as the actualy values go muc hHigher than 1.
+If you would like a deepdive on distance Fields and their uses I highly reccomend checking out <A href="http://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm">Inigo Quillez's website </A></P>
+
+<P> Now we are going to use a Time Variable to Scale this Sphere Over Times </p>
+
+<img src="{{page.img_path}}/DF_Scaling_Nodes.PNG" width="1024">
+<p>This will result in something like this</p>
+<img src="{{page.img_path}}/DF_Scaling.gif" width="1024">
+
+<p>Frac(time) basically gives us a constant period that keeps going 0-1,0-1,0-1. We multiply time by a small number 0.25 to control the scaling speed and then we multiple ply the Fraction result with the radius of the sphere, this makes the radius go from 0-1024, tus giving us an animated sphere mask.</p>
+
+<p>This is good progress, but this does not work for out effect, we need a scaling ring. This can be easily accomplished with a little bit of math on our current result.</p>
+
+<img src="{{page.img_path}}/Edge_Mask.PNG" width="1024">
+This will give us what we want, basically a growing ring, with a nice gradient falloff which can be controlled.
+<img src="{{page.img_path}}/Edge_Mask.gif" width="1024">
+
+<p>The bit of math under "Edge Mask" basically samples a positon in the gradient of the distance Field, in this case 0.5 and defines an edge mask from that position with a specified width, this is what gives us a nice scaling ring. I will not go into too much detail aboutthis technique of edge masking, maybe I'll cover it in mroe detail in another post.</p>
+  
+<p>As you can see whe have complete control over how wide the ring is with out scalar parameter, and if we wantedwe could even control the falloff with a power node, but that is not required forthis effect</p>
+
+<p>The nest step is to use some noise, to create some interesting variation to the ring</p>
+<p>For this we make use of UE4's "Vector Noise Node", you can read more about it <A Href"https://docs.unrealengine.com/latest/INT/Engine/Rendering/Materials/ExpressionReference/Vector/#vectornoise">here</A>, you could alternatively just use a custom noise texture that has WorldALigned UV COordinates</p>
+<p>In my Shader I set the Vector Noise Node to use "CellNoise", feel free to experiment with other nosie types to get you own unique effect</p>
+<img src="{{page.img_path}}/DF_Noise.PNG" width="1024">
+The result will look something like this
+<img src="{{page.img_path}}/DF_Noise.gif" width="1024">
+<p>This concludes the First Step of our shader, next we will look at the Implementing the Sobel-Edge Function</p>
+
+<H4> Sobel Edge Function </H4>
+<p>There are many different variations of this function, some more optimized than others, I am not explain this function as it is a topic of it's own, but a simple google search should give you an abundance of resources</p>
+<p> The basic idea behind Sobel-Edge Detection is this, we take the scene RenderTarget(Imagine this as a texture that holds what you currently see in your viewport)and compare each pixel with all the neighbouring pixels around it, and we compare the difference in brightness, if the brightness difference is above a certain threshold, we mark it as an edge, and in this process we get a black and white mask texture of the scene rendertarget, that has the edges masked out.</p>
+<p>The code below is a simple example of a sobelEdge Function made in Shadertoy by <A HREF="https://www.shadertoy.com/view/4t3XDM">RebelMoogle</A>(I think this one isn't fully optimized, maybe try another one), we will recreate it in UE4 with the Material Nodes</p>
+
+<xmp>
+void mainImage( out vec4 fragColor, in vec2 fragCoord )
+{
+	vec2 uv = fragCoord.xy / iResolution.xy;
+    
+    //fragColor = 4.*abs(fwidth(texture(iChannel0, uv)));
+    
+    vec3 TL = texture(iChannel0, uv + vec2(-1, 1)/ iResolution.xy).rgb;
+    vec3 TM = texture(iChannel0, uv + vec2(0, 1)/ iResolution.xy).rgb;
+    vec3 TR = texture(iChannel0, uv + vec2(1, 1)/ iResolution.xy).rgb;
+    
+    vec3 ML = texture(iChannel0, uv + vec2(-1, 0)/ iResolution.xy).rgb;
+    vec3 MR = texture(iChannel0, uv + vec2(1, 0)/ iResolution.xy).rgb;
+    
+    vec3 BL = texture(iChannel0, uv + vec2(-1, -1)/ iResolution.xy).rgb;
+    vec3 BM = texture(iChannel0, uv + vec2(0, -1)/ iResolution.xy).rgb;
+    vec3 BR = texture(iChannel0, uv + vec2(1, -1)/ iResolution.xy).rgb;
+                         
+    vec3 GradX = -TL + TR - 2.0 * ML + 2.0 * MR - BL + BR;
+    vec3 GradY = TL + 2.0 * TM + TR - BL - 2.0 * BM - BR;
+   	
+    
+   /* vec2 gradCombo = vec2(GradX.r, GradY.r) + vec2(GradX.g, GradY.g) + vec2(GradX.b, GradY.b);
+    
+    fragColor = vec4(gradCombo.r, gradCombo.g, 0, 1);*/
+    
+    fragColor.r = length(vec2(GradX.r, GradY.r));
+    fragColor.g = length(vec2(GradX.g, GradY.g));
+    fragColor.b = length(vec2(GradX.b, GradY.b));
+}
+</xmp>
+
+<p>In UE4 it looks like this:</p>
+
+<img src="{{page.img_path}}/SobelEdge_Nodes.PNG" width="1024">
+
+<p>A few notes about this setup make sure that your "SceneTexture" nodes are set to use "PostProcessInput0"</p>
+
+<img src="{{page.img_path}}/SceneTexture_Settings.PNG" width="512">
+
+<p>The two Custom Nodes GradX and Grady, use the following:</p>
+<img src="{{page.img_path}}/Sobel_Edge_Custom.PNG" width="512">
+<ul>
+<li><p>GradX:</li>
+<xmp>
+return -TL + TR - 2.0 * ML + 2.0 * MR - BL + BR;
+</xmp>
+<li><p>GradY:</li>
+<xmp>
+return TL + 2.0 * TM + TR - BL - 2.0 * BM - BR;
+</xmp>
+</ul>
+<p>This does not necessarily have to be done with a custom node, i used it merely for convenience sake, as otherwise it would have been too much node spaghetti.</p>
+
+<p>If you plug in the end result of this Node Network to the emissive channel, you will see somthing like this in your Viewport</p>
+<img src="{{page.img_path}}/SobelEdge.PNG" width="1024">
+<img src="{{page.img_path}}/EdgeTinted.jpg" width="1024">
+
+<P>We also multiply this result with a simple Vector3 so that we can tint the edges whatever color we want</p>
+<img src="{{page.img_path}}/EdgeTint.PNG" width="1024">
+
+<H4>World-Aligned Grid Texture</H4>
+<P> This part is easy we just use a simple grid texture and make it world aligned, and later combine it with the sobel-edge fucntion to get a cool BluePrint graph type effect</p>
+<img src="{{page.img_path}}/WorldAlignedGrid.PNG" width="1024">
+<P>If you plug this into the emissive, it looks like this</P>
+<img src="{{page.img_path}}/WorldGrid.PNG" width="1024">
+
+<H4>Bringing it All Together! </H4>
+
+<p>Now we will bring all three parts together, for the final Effect!</p>
+<p>First we will combine the Sobel-Edge function and the World-Aligned Grid Function by adding them together</p>
+<img src="{{page.img_path}}/SW.PNG" width="512">
+<P>Next we create a sceneTexture Node and add the result from the sobeledge and World Grid to it</p>
+<P>Then we Interpolate between the regular sceneTexture and the Added one, using the result of the scaling ring mask we created in the first part</P>
+<img src="{{page.img_path}}/FinalCombine.PNG" width="1024">
+<P>And voila we are done, The end result will look something like this. You can of course tweak the parameters and try changing some values to get different results</P>
+<img src="{{page.img_path}}/FinalResult.gif" width="1024">
+<P>I hope you found this informative, cheers</P>
+
+
+
+
+
+
+
+
+
