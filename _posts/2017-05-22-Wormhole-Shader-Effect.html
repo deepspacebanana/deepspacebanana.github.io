@@ -1,0 +1,67 @@
+---
+layout: post
+title:  "Wormhole Shader Effect"
+date:   2017-05-22 16:54:46
+author: Taizyd Korambayil
+categories: 
+- blog
+- Shader
+- Art
+- Unreal Engine
+img: post07.gif
+thumb: thumb02.jpg
+img_path: /../assets/img/blog/post07_img
+---
+
+<P>This effect is actually just a re-working of one of my old doodles, the effects is quite simple, but it seemed like a really nice use-case. I've seen similar effects being used for "Loot Pickup Effects" in games. It is a basic Vertex Deformation Shader under the hood</P><!--more-->
+<H4>Overview</H4>
+<P>This effect basically uses a Vector3 input(Location of wormhole i.e area that sucks in geometry) to generate a Distance Field Sphere, and basically pixels that are inside this sphere get sucked towards the center with a falloff controlled by the DF Sphere mask. And we create this as a material Function inside UE4 so that it can be easily applied to any existing material that we have. So lets get started! </P>
+
+<H4>Basic Concept</H4>
+<P>The basic concept behind this effect is to use a world space Distance Field Sphere Mask to blend between two different WorldPosition Offsets, one is the central location of the mask i.e center of the wormhole and the other is the regular location of the pixels in the world</P>
+
+<H4>Initial Setup</H4>
+<P>First there are a couple setups we need to make, so that we can feed the location of the wormhole from a Gameplay object or a Blueprint, in my case I use a <B>Material Parameter Collection(MPC)</B> to store the location value and then use it in the shader.</P>
+
+<img src="{{page.img_path}}/MPC_Setup.png" width="256">
+
+<P>So in your content browser right-click>Materials & Textures>MaterialParameterCollection to create a new MPC Asset,give it a name(I named mine "M_Bhole_Collection"..seemed like a good idea at the time..),then double click to open it up and click on the "+" sign next to vector Parameters to add a new Vector Parameter to the collection. Name it "Texloc" or anything you want really, but this is the parameter we will store the location from the blueprint.</P>
+
+<img src="{{page.img_path}}/MPC_Setup_01.png" width="512">
+<img src="{{page.img_path}}/MPC_Setup_02.png" width="512">
+
+<H4> Setting up Blueprint Actor to Feed Wormhole Location </H4>
+
+<P> In this section we will set up a basic blueprint actor that we will use as our gameplay object whose location we will feed into the shader to serve as the Wormhole's global Location</P>
+<P> Create a new Blueprint Asset type Actor, give it a name(I called mine BP_Texture_Locator), open up the event graph and set it up as shown below:
+<img src="{{page.img_path}}/MPC_Setup_02.png" width="512">
+
+<P>On the "Set Vector Parameter node", when you click on the collection Paramter dropwon, it should list all of the MPC's available in your project, choose the one you had created earlier. Then when you click the "Parameter Name" dropdown it will list all of the Vector Parameters available in that MPC. Choose the "TexLoc" parameter.</p>
+<P>With this set up, now the location of this BP actor will be fed to the "TexLoc" variable every tick, we can now use it in our shader to define the location of the Wormhole.
+
+<P>Next create a new Material, we use a material only because it is easier to test with while we make the shader. Later we will take all of the stuff created in this material and put it into a Material Function, this function will be where we put all of our shader math, we set this up as a material Function so that this Effect can easily be layered onto any exisitng surface shader.</P>
+
+
+
+<H4>Distance Field Sphere Mask</H4>
+<P>This part should be familiar to anybody who has read any of my older posts, so if you are not familair i reccomend checking out my explanation of the distance field sphere <A HREF="{{ site.baseurl }}{% post_url 2017-05-18-Post-Process-Scan-Effect %}">here</A></P>
+<P>Here's what the setup looks like:</P>
+<img src="{{page.img_path}}/SphereMask.PNG" width="1024">
+
+<P>It is basically the same set-up as some of my previous posts, a scaling distance field sphere, but we've also subtracted a noise texture to create some variation in the mask, so that the deformation looks interesting.</P>
+<P> The important thing here is to note how we read the Location of the Blueprint we set up earlier. Inside the shader, we can use a node called <B>"Collection Parameter"</B>.</P> 
+<img src="{{page.img_path}}/SphereMask.PNG" width="1024">
+<P>This node lets us read variables from MPC's inside our shader. If you click the node and look at it's details panel, you will notice that you can link the MPC asset you created and choose the parameter the node will reference.</P>
+
+<img src="{{page.img_path}}/MPC_Parameter.png" width="1024">
+<img src="{{page.img_path}}/MPC_Parameter_Settings.png" width="1024">
+
+<H4> Deforming Vertices </H4>
+<P>The basic concept here is to crush all the vertices of the geo to a finite point defined by the location of the Blueprint. Look at the following example.</P>
+<img src="{{page.img_path}}/WPO_Crush.png" width="1024">
+<P>If you plug that into the World Position Offset pinof the material, you will get something like this</P>
+ <img src="{{page.img_path}}/WPO_01.gif" width="1024">
+ 
+ <P>Absolute World Position - Object position gives us the localized world position of the object, so when we Lerp between it and a null value with a sine-wave as the alpha, the vertices contract to a finite point and expand back up. We use this same concept, but instead of using the "object position" we will use the Blueprint location from the MPC and instead of a sine-wave alpha we will use the scaling distance field mask.</P>
+ 
+ <H4>Putting it all together</H4>
