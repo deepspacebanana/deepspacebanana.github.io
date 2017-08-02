@@ -15,13 +15,13 @@ img_path: /assets/img/blog/post07_img
 
 <P>This effect is actually just a re-working of one of my old doodles, the effects is quite simple, but it seemed like a really nice use-case. I've seen similar effects being used for "Loot Pickup Effects" in games. It is a basic Vertex Deformation Shader under the hood</P><!--more-->
 <H4>Overview</H4>
-<P>This effect basically uses a Vector3 input(Location of wormhole i.e area that sucks in geometry) to generate a Distance Field Sphere, and basically pixels that are inside this sphere get sucked towards the center with a falloff controlled by the DF Sphere mask. And we create this as a material Function inside UE4 so that it can be easily applied to any existing material that we have. So lets get started! </P>
+<P>This effect basically uses a Vector3 input(Location of wormhole i.e area that sucks in geometry) to generate a Distance Gradient, then the pixels that are inside this sphere get sucked towards the center with a falloff controlled by the gradient strength. we will be creating this as a material Function inside UE4 so that it can be easily applied to any existing material that we have. So let's get started! </P>
 
 <H4>Basic Concept</H4>
 <P>The basic concept behind this effect is to use a world space Distance Field Sphere Mask to blend between two different WorldPosition Offsets, one is the central location of the mask i.e center of the wormhole and the other is the regular location of the pixels in the world</P>
 
 <H4>Initial Setup</H4>
-<P>First there are a couple setups we need to make, so that we can feed the location of the wormhole from a Gameplay object or a Blueprint, in my case I use a <B>Material Parameter Collection(MPC)</B> to store the location value and then use it in the shader.</P>
+<P>First there are a couple setups we need to make, so that we can feed the location of the wormhole from a Gameplay object or a Blueprint. In my case I use a <B>Material Parameter Collection(MPC)</B> to store the location value and then use it in the shader.</P>
 
 <img src="{{ site.baseurl }}/{{page.img_path}}/MPC_Setup.png" width="128">
 
@@ -38,7 +38,7 @@ img_path: /assets/img/blog/post07_img
 <img src="{{ site.baseurl }}/{{page.img_path}}/BP_Setup_01.png" width="512">
 
 <P>On the "Set Vector Parameter node", when you click on the collection Paramter dropwon, it should list all of the MPC's available in your project, choose the one you had created earlier. Then when you click the "Parameter Name" dropdown it will list all of the Vector Parameters available in that MPC. Choose the "TexLoc" parameter.</p>
-<P>With this set up, now the location of this BP actor will be fed to the "TexLoc" variable every tick, we can now use it in our shader to define the location of the Wormhole.
+<P>With this set up, now the location of this BP actor will be fed to the <B>"TexLoc"</B> variable every tick, we can now use it in our shader to define the location of the Wormhole.
 
 <P>Next create a new Material, we use a material only because it is easier to test with while we make the shader. Later we will take all of the stuff created in this material and put it into a Material Function, this function will be where we put all of our shader math, we set this up as a material Function so that this Effect can easily be layered onto any exisitng surface shader.</P>
 
@@ -49,7 +49,7 @@ img_path: /assets/img/blog/post07_img
 <P>But i used a slightly different method this time, but it yeilds the same results:</P>
 <img src="{{ site.baseurl }}/{{page.img_path}}/Mask_01.png" width="1024">
 <P>What this does is it creates, a spherical gradient based on the distance between the pixels and the location of the Blueprint actor</P>
-<P>Go ahead and add a couple objects into your scene and apply the material we jsut made to them.Now drag the Blueprint Actor you made earlier into the level andtry moving it around.You should see something like below:</P>
+<P>Go ahead and add a couple objects into your scene and apply the material we jsut made to them.Now drag the Blueprint Actor you made earlier into the level and try moving it around.You should see something like below:</P>
  <img src="{{ site.baseurl }}/{{page.img_path}}/Mask_g01.gif" width="512">
 
 <P> The important thing here is to note how we read the Location of the Blueprint we set up earlier. Inside the shader, we can use a node called <B>"Collection Parameter"</B>.</P> 
@@ -92,7 +92,7 @@ img_path: /assets/img/blog/post07_img
  
  <P>So now, you can basically access this function in any material and layer it on as shown below, by feeding the appropriate parameters into the function and using it's outputs on the final output pins</P>
  <img src="{{ site.baseurl }}/{{page.img_path}}/MatFunc.png" width="512">
- <P>You can see the ned results below, where I ahve applied the function to some of epic's demo assets, I hope you found this useful</P>
+ <P>You can see the end results below, where I have applied the function to some of Epic's demo assets. I hope you found this mini-tutorial useful, feel free to email me if you ahve any questions or suggestions!</P>
  
  <img src="{{ site.baseurl }}/{{page.img_path}}/post07.gif" width="1024">
   <img src="{{ site.baseurl }}/{{page.img_path}}/Wormhole_Suck.gif" width="512">
