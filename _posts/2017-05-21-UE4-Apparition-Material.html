@@ -19,12 +19,12 @@ img_path: /../assets/img/blog/post03_img
 <H4>The Sphere Mask</H4>
 <P>This part is basically the same as what I did in my <A HREF="{{ site.baseurl }}{% post_url 2017-05-18-Post-Process-Scan-Effect %}">Post-Process Scan Effect Article</A> with only one difference, please refer to that post for an explanation of how we set up the animated distance field,</P>
 
-<img src="{{page.img_path}}/DistanceFieldSphere.png" width="1024">
+<img src="{{ site.baseurl }}/{{page.img_path}}/DistanceFieldSphere.png" width="1024">
 
 <P>As you can see the only big difference is that here we use the objects position instead of a Vector3 Paramter, technically you can add or subtract values from the object position to position the Distance Field Sphere as you like.</P>
 <P>If you plug in the result from this network to the material's <B>Opacity Mask</B> input, you will see something like this</P>
 
-<img src="{{page.img_path}}/DF_Masking.gif" width="1024">
+<img src="{{ site.baseurl }}/{{page.img_path}}/DF_Masking.gif" width="1024">
 
 <P>As you can see the Distance Field Sphere creates a spherical Apparition shape forthe mesh, you can technicaly use any kind of Distance Field Function you want, so any kind of shape is possible, the sphere is the simples and cheapest i nterms of instruction count</P>
 
@@ -34,39 +34,39 @@ img_path: /../assets/img/blog/post03_img
 
 <P>I am using a Texture with three different greyscale patterns packed into each channel to drive the effect, here is what my setup looks like:</P>
 <P><B>Binary_Generator.tga</B></P>
-<img src="{{page.img_path}}/TextureSetup.jpg" width="1024">
+<img src="{{ site.baseurl }}/{{page.img_path}}/TextureSetup.jpg" width="1024">
 
 <P>Now we will combine the gresycale information from the Pattern to modify the mask as shown below:</P>
 
-<img src="{{page.img_path}}/Noise_Combine.png" width="1024">
+<img src="{{ site.baseurl }}/{{page.img_path}}/Noise_Combine.png" width="1024">
 
 <P>As you can see we subtract the Red channel of the pattern texture from the result of the Distance Field Function to create the value difference at the edges that brings in the pattern, into the mask function. We also multiply the red channel by a scalar Parameter <B>MaskSpread</B>(note:As you increase the spread value, you will also need to increase the radius of the DF Sphere to compensate for the spread so that the entire mesh is covered in the transition, i.8 mutliple the objectradius by a higher value.), which controls the spread of teh noise values from the edges, if we increase this value, you will get more noise spread</P>
 <P>If we preview the clamp node, we will get a preview of what the mask looks like now:</P>
 
-<img src="{{page.img_path}}/MaskNoisePre.gif" width="1024">
+<img src="{{ site.baseurl }}/{{page.img_path}}/MaskNoisePre.gif" width="1024">
 
 <H4>Edge Masking for Emissive</H4>
 <P>In this section we will create and edge mask, so that the edges of the transition can be highlighted with an emissive color, this setup is also borrowed from my <A HREF="{{ site.baseurl }}{% post_url 2017-05-18-Post-Process-Scan-Effect %}">Post-Process Scan Effect Article</A> so read about it there for a full explanation. </P>
 
-<img src="{{page.img_path}}/EdgeMask.png" width="1024">
+<img src="{{ site.baseurl }}/{{page.img_path}}/EdgeMask.png" width="1024">
 
 <P>What I have done here is basically take the Mask Field (Result of the Subtract node) and run it through an Edge Mask Function,This basically masks the edges of the Distance Field Sphere ,this gives us the result shown below wich we will sue to lerp with an emissive value for the edges</P>
 
-<img src="{{page.img_path}}/EdgeMask.gif" width="1024">
+<img src="{{ site.baseurl }}/{{page.img_path}}/EdgeMask.gif" width="1024">
 
 <H4>Final Touches</H4>
 
 <P>Now we just plug in the emissive mask and Opacity Mask to their respective inputs</P>\
 <P>All we have to do now is multiply the emissive mask with an Emissive Color Value and plug that output into the Emissive input of the material, and plug our Opacity Mask output to the opacity input of the material, and Voila we are done!</P>
 
-<img src="{{page.img_path}}/Final_Nodes.png" width="512">
+<img src="{{ site.baseurl }}/{{page.img_path}}/Final_Nodes.png" width="512">
 
-<img src="{{page.img_path}}/CubeGif_02.gif" width="512">
+<img src="{{ site.baseurl }}/{{page.img_path}}/CubeGif_02.gif" width="512">
 
 <P> You can of course, swap out the patterns used to get different effects as well as tweak teh different parameters in the shader to get variations, here's a couple I made with just adjusting values and changing patterns.</P>
 
 <img src="/../assets/img/blog/{{ page.img }}" width="512">
-<img src="{{page.img_path}}/NumberGif_02.gif" width="512">
-<img src="{{page.img_path}}/NumbersGif_01.gif" width="512">
+<img src="{{ site.baseurl }}/{{page.img_path}}/NumberGif_02.gif" width="512">
+<img src="{{ site.baseurl }}/{{page.img_path}}/NumbersGif_01.gif" width="512">
 
 <P>I hope you found this articel useful! Cheers!</P>
