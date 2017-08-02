@@ -21,10 +21,10 @@ img_path: /../assets/img/blog/post01_img
 <p>Here is a preview of what the material looks like along with the entire material graph, if you'd rather not read through all my ramblings/explanation</p>
 <p>My goal with this project was to create a "Genereal Purpose" ice material. Something that could be tweaked with parameters to work decently for any kind of use.</p>
 
-<img src="/../assets/img/blog/post01_img/IceShowcase_Gif.gif" width=1024>
-<img src="/../assets/img/blog/post01_img/Opaque_Ice.png" width="1024">
-<img src="/../assets/img/blog/post01_img/ICe_Floor_Showcase.gif" width="512">
-<img src="/../assets/img/blog/post01_img/FullGraph.JPG" width="1024">
+<img src="{{ site.baseurl }}/assets/img/blog/post01_img/IceShowcase_Gif.gif" width=1024>
+<img src="{{ site.baseurl }}/assets/img/blog/post01_img/Opaque_Ice.png" width="1024">
+<img src="{{ site.baseurl }}/assets/img/blog/post01_img/ICe_Floor_Showcase.gif" width="512">
+<img src="{{ site.baseurl }}/assets/img/blog/post01_img/FullGraph.JPG" width="1024">
 
 <H4>Textures</H4>
 		<P>This material makes use of 4-5 textures depending on whether you choose to add a baked normal map for a mesh, 3 of them will contain patterns in each channel and one will be a
@@ -32,13 +32,13 @@ general purpose noisy normal map. I used Substance designer to generate these pa
 the textures are set up. </P>
 
 <H4>BubbleMask.tga</H4>
-<img src="/../assets/img/blog/post01_img/BubbleMask_BD.jpg" width="1024">
+<img src="{{ site.baseurl }}/assets/img/blog/post01_img/BubbleMask_BD.jpg" width="1024">
 <H4>ColorMask-Crack-Roughness.tga</H4>
-<img src="/../assets/img/blog/post01_img/ColorMask-Crack-Roughness_BD.jpg" width="1024">
+<img src="{{ site.baseurl }}/assets/img/blog/post01_img/ColorMask-Crack-Roughness_BD.jpg" width="1024">
 <H4>Subsurface-Height-Speckle.tga</H4>
-<img src="/../assets/img/blog/post01_img/Subsurface-Height-Speckle.jpg" width="1024">
+<img src="{{ site.baseurl }}/assets/img/blog/post01_img/Subsurface-Height-Speckle.jpg" width="1024">
 <H4>NormalMap</H4>
-<img src="/../assets/img/blog/post01_img/Ice_Substance_BaseNormal.jpg" width="220">
+<img src="{{ site.baseurl }}/assets/img/blog/post01_img/Ice_Substance_BaseNormal.jpg" width="220">
 
 <H4>BumpOffset Node:</H4>
 
@@ -48,27 +48,27 @@ The basic explanation of how it works is this, you feed it a Coordinate value, a
  as though they are "under" the surface, where as if you have a height value of 0 and a height ratio value of 1.0, pixels will appear to bulge above
  the surface  (This can look very bad unless you use subtle values). <A href="https://docs.unrealengine.com
 /latest/INT/Engine/Rendering/Materials/HowTo/BumpOffset">Here's</A> the documentation page for the node</P>
-<img src="{{page.img_path}}/BumpOffsetNode.JPG" width="512">
+<img src="{{ site.baseurl }}/{{page.img_path}}/BumpOffsetNode.JPG" width="512">
 
 <H4>Creating Masks for Surface Coloration</H4>
 
 <P>In this step, we are going to mix and match some of the textures we made to create some masks that we will use to control the shader’s coloration and expose some useful variables as parameters so that we can use it to tweak the shader’s appearance with Instances. You can see the network below:</P>
 <P>First we create a scalar parameter, “Master Tiling”, we will use this to control the global tiling value for the entire material.</P>
-<img src="{{page.img_path}}/Master_Tiling_Parameter.JPG" width="512">
+<img src="{{ site.baseurl }}/{{page.img_path}}/Master_Tiling_Parameter.JPG" width="512">
 
 <P class="description">1: Next we create the basic setup that will repeat for all the textures that we use in the shader, we set up a scalar parameter to control the tiling for each TextureSample and multiply it by the Global Tiling parameter , we also setup the bumpOffset Node and the values for it’s inputs to be use. </P>
 		
-<img src="{{page.img_path}}/SurfaceColoration_Mask.JPG" width="1024">
+<img src="{{ site.baseurl }}/{{page.img_path}}/SurfaceColoration_Mask.JPG" width="1024">
 		
 <P>We do some basic value adjustments to each texture sample with a power node, we do this to create some variation in the masks as we will be re-using the same textures many times in the shader. WIth this network set up we have 3 mask outputs ready to be used (labeled in the image). We will make use of these later.</P>
 
 <H4>Bubble,Cracks,Surface Masks</H4>
 <P>This part of the graph creates surface masks to control areas where the bubbles are visible. </P>
 		
-<img src="{{page.img_path}}/Crack and SurfaceMasks.JPG" width="1024">
+<img src="{{ site.baseurl }}/{{page.img_path}}/Crack and SurfaceMasks.JPG" width="1024">
 		
 <P>In this section we are going to set up the the masks for the bubbles and surface cracks, see the node Graph below: </P>
-<img src="{{page.img_path}}/BubbleMask.JPG" width="1024">
+<img src="{{ site.baseurl }}/{{page.img_path}}/BubbleMask.JPG" width="1024">
 <P> In the graph above we repeat the process of setting up tiling parameters for the textures for each texturesample.</P>
 
 <P> 
@@ -78,14 +78,14 @@ The basic explanation of how it works is this, you feed it a Coordinate value, a
 		
 <P>We multiply the end result of this network with the an the inverted result of Mask_01 from the previous section. This is done so the bubbles are not visible if they are under the Opaque sections of the ice surface. The gif below shows what the result of this network looks like.</P>
 		
-<img src="{{page.img_path}}/BubbleMask_GIF.gif" width="256">
+<img src="{{ site.baseurl }}/{{page.img_path}}/BubbleMask_GIF.gif" width="256">
 
 <H4>Material Roughness</H4>
 <P>This section of the graph deals with how we set up the roughness input for the material, we do the same process as before and set up the tiling properties for the texture with the speckle pattern in the Blue channel, we use this as the mask to Lerp between a min an max roughness value. We expose these values as parameters so they can be tweaked. Finally we do a final lerp with the crack pattern mask from Mask_01, this is to give the cracked areas a different roughness than the rest of the surface. </P>
-<img src="{{page.img_path}}/Roughness_Graph.PNG" width="1024">
+<img src="{{ site.baseurl }}/{{page.img_path}}/Roughness_Graph.PNG" width="1024">
 		
 <P>This will serve as the roughness output for the material, if we preview it, it will look something like this:</P>
-<img src="{{page.img_path}}/Roughness_Output.gif" width="256">
+<img src="{{ site.baseurl }}/{{page.img_path}}/Roughness_Output.gif" width="256">
 
 <H4>Opacity/Subsurface Masking</H4>
 		
@@ -107,57 +107,57 @@ It is important to note that Opacity serves two purposes in this material, since
 	   
 	   <p>This first section just makes a basic mask using the texture we created earlier, but we also add some fresnel, so that the edges of the object do not become completely transparent as this can make the object feel floaty, and not very grounded in the world. </p>	
 	   
-	   <img src="{{page.img_path}}/Opacity.PNG" width="1024">
+	   <img src="{{ site.baseurl }}/{{page.img_path}}/Opacity.PNG" width="1024">
 	   
 	   <p>If you preview the node commented as opacity, you’ll see something like this:</p>
 	   
-	   <img src="{{page.img_path}}/Opacity-SubsurfaceMaskGif.gif" width="256">
+	   <img src="{{ site.baseurl }}/{{page.img_path}}/Opacity-SubsurfaceMaskGif.gif" width="256">
 	   
 <H5><b>Part 2: Camera Distance Mask</b></H5>
 	   <p>Here we set up  a camera distance based mask, so that the translucency becomes visible only when we are closer than a specified distance from the object (in thi s case 512 units). 
 This was a personal choice for me, I didn’t like the way objects looked translucent from afar and wanted it to happend only when the viewer was close to the object.</p>
-	 	<img src="{{page.img_path}}/Camera_Distance.PNG" width="756">
+	 	<img src="{{ site.baseurl }}/{{page.img_path}}/Camera_Distance.PNG" width="756">
 		
 		<p>Here’s a gif showing what this network does, As you can see, the mask gets darker(i.e more transparent) the closer the camera is to the object.</p>
-		<img src="{{page.img_path}}/CameraMask.gif" width="256">
+		<img src="{{ site.baseurl }}/{{page.img_path}}/CameraMask.gif" width="256">
 		
 		<H4>Final Opacity Mask Blending</H4>
 		<p>In this part we bring together all the previous masks we made and blend them together to get the final output that goes into the Opacity Input of the material:</p>
-		<img src="{{page.img_path}}/OpacityMask_Blending.PNG" width="756">
+		<img src="{{ site.baseurl }}/{{page.img_path}}/OpacityMask_Blending.PNG" width="756">
 		<BR>
 		
 		<p>If you preview the output of all these blends, it will look something like this. </p>
-		<img src="{{page.img_path}}/Opacity_Mask_Gif.gif" width="256">
+		<img src="{{ site.baseurl }}/{{page.img_path}}/Opacity_Mask_Gif.gif" width="256">
 		
 <H4>BaseColor Pass</H4><BR><BR>
 		<p>The section below shows how we combine all the masks we have created in the previous sections to make the basecolor pass for the material. I used Adobe’ Kuler to pick an Analogous Color palette of light and deep blues, we expose all these colors as Texture Parameters so that it can be tweaked to any artists desires. I’ve commented which Mask goes to which lerp node.</p>
-		<img src="{{page.img_path}}/ColorPalette.PNG" width="512">
+		<img src="{{ site.baseurl }}/{{page.img_path}}/ColorPalette.PNG" width="512">
 		<BR><BR>
 		<p>In the end we run everything through a Fuzzy shading Material Function, it works very similar to a fresnel but we are able to control the core darkness and the edge brightness, this function was commonly used when creating moss, cloth(before th release of the new shading model) and grass materials, but it provides an effect that I think works welll with Ice as well.</p>
 		
-		<img src="{{page.img_path}}/Final_Color_Comp.PNG" width="1024">
+		<img src="{{ site.baseurl }}/{{page.img_path}}/Final_Color_Comp.PNG" width="1024">
 		
 		<p>If you preview the fuzzy shading node you will see something that looks like this. The output from this FuzzyShading Node will go into the BaseColor input of the material. This result will also be used to create the subsurface color in the next section.  </p>
-		<img src="{{page.img_path}}/FinalColorPreview.gif" width="256">
+		<img src="{{ site.baseurl }}/{{page.img_path}}/FinalColorPreview.gif" width="256">
 
 <H4>Subsurface Color</H4>
 		<p>The subsurface color output is generated by multiplying the Final Color Output with a parameterized color hue, and scaling factor to control how bright the color is. the output of this multiply node will go into the materials subsurface color input.</p>
-		<img src="{{page.img_path}}/SubSurface_Color.PNG" width="756">
+		<img src="{{ site.baseurl }}/{{page.img_path}}/SubSurface_Color.PNG" width="756">
 		
 <H4>Normal Map</H4>
 		<p>For the materials normal, the setup is simple, we use the normal texture, with uv coordinates from the Surface Masks section, we also add a static switch parameter to control whether we want to combine it with a baked object normal map. This option is made so that when we apply this material to an object with baked normal maps, we blend the ice normals with the objects baked normal map.</p>
-		<img src="{{page.img_path}}/NormalMap.PNG" width="512">
+		<img src="{{ site.baseurl }}/{{page.img_path}}/NormalMap.PNG" width="512">
 		
 <H4>Performance, optimization/Final Thoughts</H4>
 		<p>When you create an instance of this material, you will have the option, of using it as a either a translucent-Subsurface material or as an opaque subsurface material. Using the translucency is quite expensice and ideally you’d want to mip to a cheaper material pretty quickly. The opaque-subsurface version on the other hand is not as beefy and is quite performant.</p>	
 	  	<BR><BR>
 		<p>If you look at the shader complexity comparison between a <B>transparent-subsurface</B> and an <B>Opaque-subsurface</B> version of the material you will there is quite a big difference. For proper estimation of performance of course you want to use the GPU profiler to get accurate information on exactly what is going on in the scene.</p>
-		<img src="{{page.img_path}}/Shader.jpg" width="756">
-		<img src="{{page.img_path}}/ShaderComplexity.jpg" width="756"><img src="{{page.img_path}}/Translucent_Subsurface.PNG" width="756">
-		<img src="{{page.img_path}}/Opaque_Subsurface.PNG" width="756">
+		<img src="{{ site.baseurl }}/{{page.img_path}}/Shader.jpg" width="756">
+		<img src="{{ site.baseurl }}/{{page.img_path}}/ShaderComplexity.jpg" width="756"><img src="{{page.img_path}}/Translucent_Subsurface.PNG" width="756">
+		<img src="{{ site.baseurl }}/{{page.img_path}}/Opaque_Subsurface.PNG" width="756">
 		
 		<p class="description">The image below shows all the parameters that are exposed to the material instance, these settings can be tweaked to achieve different looks with the same material.</p>
-		<img src="{{page.img_path}}/Parameters.PNG" width="512">
+		<img src="{{ site.baseurl }}/{{page.img_path}}/Parameters.PNG" width="512">
 		<BR><BR><BR>
 		<p><B>Thank you for reading and I hope you find this useful!Cheers!<B></p>
 
