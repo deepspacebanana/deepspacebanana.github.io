@@ -61,7 +61,7 @@ This will give us what we want, basically a growing ring, with a nice gradient f
 <p>As you can see whe have complete control over how wide the ring is with out scalar parameter, and if we wantedwe could even control the falloff with a power node, but that is not required forthis effect</p>
 
 <p>The nest step is to use some noise, to create some interesting variation to the ring</p>
-<p>For this we make use of UE4's "Vector Noise Node", you can read more about it <A Href"https://docs.unrealengine.com/latest/INT/Engine/Rendering/Materials/ExpressionReference/Vector/#vectornoise">here</A>, you could alternatively just use a custom noise texture that has WorldALigned UV COordinates</p>
+<p>For this we make use of UE4's "Vector Noise Node", you can read more about it <A HREF="https://docs.unrealengine.com/latest/INT/Engine/Rendering/Materials/ExpressionReference/Vector/#vectornoise">here</A>, you could alternatively just use a custom noise texture that has WorldALigned UV COordinates</p>
 <p>In my Shader I set the Vector Noise Node to use "CellNoise", feel free to experiment with other nosie types to get you own unique effect</p>
 <img src="{{ site.baseurl }}/{{page.img_path}}/DF_Noise.png" width="1024">
 The result will look something like this
