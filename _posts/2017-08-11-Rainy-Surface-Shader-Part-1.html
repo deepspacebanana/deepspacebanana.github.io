@@ -82,7 +82,45 @@ abs(sin((Time*RainSpeed)*0.5));
 <P>All the basic setups for the ripples are done, now we jsut need to setup ways to get Inputs from a base material(BaseColor,normal,metallic,roughness) so that we can blend in the ripples and wetness.The following sections will cover how to do that.</P>
 
 <H4>BaseColor</H4>
-<P></P>
+<P>For the BaseColor, we need to add a Function Input to Recieve the basecolor from the base material so that we can overlay the water color. We then overlay a water color and blend it using the ripplemask that we just created.</P>
+<P>First add 4 Function Inputs <B>WaterBrightness(Scalar),BaseColor(Vector3),WaterColor(Vector3),Metallic(Scalar)</B></P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/nodes_05.png" width="1024">
 
+<P>We take the BaseColor Input and multiply it with the watercolor and then with the water brightness, this creates teh basecolor for the ripples.</P>
+<P>We also take the basecolor and multiply it by 0.5 to make it darker in color, we do this becasue <B>most</B> surfaces become darker in color when wet, there are some exceptions mostly metals/non porous materials.This is why we use the Metallic input to lerp between the regular basecolor and the one that is multiplied to be darker.</P>
+<P>We the ninterpolate between these to results with teh Ripple mask to create the final baseColor output.</P>
+<P>Create a Function Output called <B>Basecolor</B> and plug it into that</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/BaseColor_Output.png" width="256">
+
+<H4>Normal Blending</H4>
+<P>In this section we create a function input to read the base material Normal Information and then overlay the ripple normals on top of it.</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/nodes_06.png" width="1024">
+<P>We take the ripple normals we created earlier, and combine it with the base material normal info using the handy <B>Blend Angle Corrected Normals Function</B>, we then lerp between the base material normal and the overlayed normal using the ripplemask</P>
+<P>We then create a Function Output called Normal and plug the result into it.If you preview the result, you will see that the ripple nomrals are overlayed:</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/Normal_Output.png" width="256">
+
+<img src="{{ site.baseurl }}/{{page.img_path}}/nodes_05_vis.gif" width="256">
+
+<H4>Metallic,Roughness</H4>
+<P>The metallic and roughness setups are pretty straight forward:</P>
+<P>For Metallic we set up a function Input to read the Base Material Metallic value and we linear interpolate it with a value of 0.0(I'm not sure what the correct metallic value to use for water is but I liked 0.0,since..well water isn't metal)using, again the ripplemask as the alpha and then plug it into a function output called Metallic.</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/nodes_07.png" width="1024">
+
+<P>For the roughness as well we set up an Input function to read the Values from the Base Material, multiply it by a value of 0.5(because once a surface is wet, it tends to be shinier), and then Lerp it with a value of 0.0 using the ripplemask for the alpha.Then same as before we create Function Output for Roughness and plug it into that.</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/nodes_08.png" width="1024">
+
+<P>And that's pretty much all we need in our function for now, we can off create more ripple networks to add more variation, but for now this is enough, another thing we could do is add refraction options so that, the water actaully refracts and bends the light on the surface, this is something I'll cover in part-2 when we look at streaking and slope awareness.</P>
+
+<H4>Using the Function</H4>
+<P>Now in the detail's panel we can expose the function to the library and access it in any of our other shaders, and alyer it.</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/Expose.png" width="512">
+<P>Below you can see how I've added teh function to one of epic's default tile materials, jsut feed in teh appropraite inputs and use the outputs from teh function as inputs forthe base shader.</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/MF_Ripple.png" width="512">
+
+<img src="{{ site.baseurl }}/{{page.img_path}}/final_01.gif" width="512"><BR>
+
+<img src="{{ site.baseurl }}/{{page.img_path}}/final_02.gif" width="1024">
+
+<P>I hope you found this useful, for fun here's a small preview of what we will be covering in part-2!</P>
 
 
