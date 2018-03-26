@@ -1,0 +1,100 @@
+---
+layout: post
+title:  "Glitch Effects"
+date:   2018-03-24 16:54:46
+author: Admin
+categories: 
+- blog
+- Shader
+- Art
+- Unreal Engine
+img: post10.gif
+thumb: thumb02.jpg
+img_path: /../assets/img/blog/post10_img
+---
+
+<p>This little project was spawned from being inspired by a video I saw showcasing all the cool Glitch Effects from Horizon Zero Dawn</p> <!--more-->
+<p>I decided to try and make some form of a general purpose glitch shader that could be applied to any piece of geometry, I made two variations, one was a simple random distortiony glitch and the other used the same idea and combined it with my previous sphere mask based apparition effect to create a new type of apparition shader. You can see them both below.</p>
+
+<p style="color:red;">Note: You can open the images in a new tab to view them at a higher resolution</p>
+
+<H4>Glitch Effect</H4>
+<img src="{{ site.baseurl }}/{{page.img_path}}/Glitch_01.gif" width="512">
+
+<H4>Apparition</H4>
+<img src="{{ site.baseurl }}/{{page.img_path}}/Glitch_02.gif" width="512">
+
+<H2>Breakdown</H2>
+<p>Like some of my previous posts, I encapsulated this entire shader into a material function so that it can be easily layered into any existing shader. So the first step is to create a Material Function.</p>
+
+<p>The next step is to generate a psuedorandom CellNoise, this is what we will use to drive the color and Vertex Deformation of the glitch. You can see the netwrok below</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/Nodes_01.png" width="1024">
+
+<p>Now you may be wondering, but UE4 already has a "Noise" Function, why don't you jsut use that? I could have..but I'm weird like that, also for some reason my custom network has less instructions</p>
+
+<p>What this network is doing is essentially taking the localized WorldPosition of the object > adding a time based psuedo-random scalar value to each channel > running it through a custom function <B>MF_Vec3Noise3</B> which generates a psuedorandom Vector 3 value, which is our cell noise.</p>
+
+<p>I add 0.1 and bias it because my function outputs values from -1 to 1, and i want values tht go from 0-1 instead, the 0.1 is to avoide any complete 0 values.</p>
+<p>The output from this network will look like this</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/output_01.gif" width="512">
+
+<H4>Noise Functions</H4>
+
+<p>The two noise functions <B>MF_Noise1D</B> and <B>MF_Vec3Noise3</B> generate psuedo-random values based on inputs that are fed to them, the only difference between them being 1D takes a scalar input and outputs a random scalar value, the Vec3 one takes a Vector3 Input and outputs a Vector3 Psuedorandom Value.</p>
+<p>If you would like to learn more about noise, I highly reccommend checking out <A HREF="https://thebookofshaders.com/11/">The Book of Shaders</A>, they do a great job of explaining it as well as it's many uses.</p>
+
+<p>Here's what the node network for my functions looks like:</p>
+<H4>MF_Vec3Noise3</H4>
+<img src="{{ site.baseurl }}/{{page.img_path}}/Noise3D.png" width="1024">
+<H4>MF_Noise1D</H4>
+<img src="{{ site.baseurl }}/{{page.img_path}}/Noise1D.png" width="1024">
+
+<H4>Opacity Mask </H4>
+<p>The next step is to create a mask that will drive the Opacity</p> 
+<img src="{{ site.baseurl }}/{{page.img_path}}/Nodes_02.png" width="1024">
+<p>For this too, I calculate the localized worldposition of the object and then isolate the vector along which I want the mask effect to work. In my case I mask out the redChannel which is the X Vector of the object(You could convert this to a parameter so that you can pick along which axis the effect occurs)</p>
+<p> We also have input parameters to enter the objects Length etc so that the shader can be customized to work with any object(in the future I will update this post to show how we can procuderally get these values without having to manually enter them).</p>
+<p>If you preview the subtract node commented as <B>BaseopacityMask</B> you will see this</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/basemask.gif" width="512">
+<p> As you can see we have a black and white mask that travels along the x axis of the object, we will combine this with some other outptus to get the final opacity mask.</p>
+
+<p>The <B>Edge Mask from Sample Gradient</B> does exactly what it says, it samples the mask gradient and generates an Edge Mask, we use this to mask out the edge Fx as well as apply VertexDeformation for the Final Shader Effect. If you preview the out put from there you will see this. More on this soon.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/edgemask.gif" width="512">
+
+<H4>Final Opacity Mask</H4>
+<p>To generate the final opacity mask we isolate the redChannel from our psuedorandom cell noise>multiply it by a scaling factor(This controls the falloff of the transition,higher value = more falloff and vice versa), and subtract it from the baseopacitymask gradient to generate a cell pattern falloff. As shown below, this will be the input for the OpacityMask in the shader.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/finalopacity.png" width="512">
+<img src="{{ site.baseurl }}/{{page.img_path}}/finalopacity.gif" width="512">
+
+<H4>Vertex Deformation/WorldPosition Offset</H4>
+<p>For the worldposition offset we take the output result from the psuedorandom cell noise > Multiply it with the vertex Normals > multiply it with scaling Factor(Deformation Strength) and then Linear interpolate it with a NULL value using the out put from the Gradient Sample Edge Mask as the alpha. This final result goes into the shader's WorldPositionOffset Input</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/wponodes.png" width="512">
+<p> if you preview the shader with just the WPO input, it'll look like this</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/wpo.gif" width="512">
+
+<H4>Color Blending/Emissive</H4>
+<p> For the Final Color we just create a fresnel from the object's normal map and multiply it by the Psuedorandom cell noise input. Then we blend between this value and the object's base color using the Gradient Sampled Edge Mask Output. We do the same for the emissive, blending between the Emissive Input, using the Gradient Sampled Edge Mask Output.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/colorblending.png" width="1024">
+<H4>BaseColor</H4>
+<img src="{{ site.baseurl }}/{{page.img_path}}/basecolor.gif" width="512">
+
+<H4>Emissive</H4>
+<img src="{{ site.baseurl }}/{{page.img_path}}/Emissive.gif" width="512">
+
+<p>And that's it! the entire functions node network should look something like this:</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/FullFunction.png" width="512">
+<p>The Function Node will look like this when you use it in your material, it'll take your entire material as an input and apply the shader effect on top of your existing shader</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/FunctionNode.png" width="512">
+
+<H4>Randomized Glitch</H4>
+<img src="{{ site.baseurl }}/{{page.img_path}}/Glitch_01.gif" width="512">
+<p>To make make a randomized glitch effect like the one shown above, it's jsut a matter of swapping out the sine gradient part of network with a netwrok that creates a spheremask with a time based randomised position, which can be done with the following.
+<img src="{{ site.baseurl }}/{{page.img_path}}/randompos.png" width="1024">
+<p>If you preview the result from this, you will see that it is basically a sphere mask that get moved around the model randomly</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/randompos.gif" width="512">
+
+<p>And that's it! Hope you found this breakdown useful! Feel free to email me if you have any questions.</p>
+
+<img src="{{ site.baseurl }}/{{page.img_path}}/Glitch_Combo.gif">
+<img src="{{ site.baseurl }}/{{page.img_path}}/Final.gif">
+
