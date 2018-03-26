@@ -2,7 +2,7 @@
 
 # Site settings
 title: DeepSpaceBanana Art
-description: "Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description."
+description: "Taizyd Korambayil's Game Dev Portfolio and Blog: This website serves as my online portfolio/blog covering 3D Art, Technical Art and general Game Dev"
 analytics: UA-104053089-1 #Google analytics code in the format XX-nnnnnnnn-n
 baseurl: "/deepspacebanana.github.io" #/deepspacebanana.github.io
 url: "http://deepspacebanana.github.io"
