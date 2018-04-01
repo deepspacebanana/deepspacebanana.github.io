@@ -1,0 +1,159 @@
+---
+layout: post
+title:  "Star Wars Inspired Hologram Shader and Blueprint System"
+date:   2018-03-26 16:54:46
+author: Admin
+categories: 
+- blog
+- Shader
+- Art
+- Unreal Engine
+img: post11.gif
+thumb: thumb02.jpg
+img_path: /../assets/img/blog/post11_img
+---
+
+<P>I wanted to do this little shader because I had been watching a lot of the <B>The Clone Wars</B> animated show lately, and I wanted to recreate the holograms from the show, I really like the iconic star wars hologram effect, it's very simple yet effective.</P> <!--more-->
+
+<p>I decided to try and make my system easily re-usable within a game development context, so I created a blueprint system to encapsulate the hologram system, which lets you assign any asset you want to be shown as a hologram. The Majority of the effect is handled by two shaders, and the blueprint setup is a convenient way to make the system re-usable as a game object.</p>
+<p style="color:red;">Note: You can open the images in a new tab to view them at a higher resolution</p>
+
+<img src="{{ site.baseurl }}/{{page.img_path}}/post11_V2.gif" width="512">
+<H4>Setup</H4>
+<p>The system makes use of two meshes:</p>
+<B><H5>Base Cylinder</H5></B>
+<img src="{{ site.baseurl }}/{{page.img_path}}/cylinder.gif" width="256">
+<p>The base cylinder is jsut a cylinder with no caps, and the pivot aligned to the bottom center(This is important). We use this as the hologram base projection, using a shader we will reshape it an animate it.</p>
+<B><H5>Hologram Asset</H5></B>
+<img src="{{ site.baseurl }}/{{page.img_path}}/scope.png" width="256">
+<p>This can be any asset, in my case I'm using a scope I modelled a while back as my asset.</p>
+
+<p>Each of these objects will get a unique shader with similar look-dev and some shared parameters so that they work together.</p>
+
+<H4>Setting up the Parameter Collection</H4>
+<p>First we setup an MPC for the shared parameters</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/MPC.png" width="512">
+<UL>
+<LI><B>Activation:</B>Scalar parameter that controls the hologram's on/off status.</LI>
+<LI><B>Turbulance_Amt:</B>Scalar parameter that controls how much turbulance/distortion affects the hologram.</LI>
+<LI><B>Turbulance_Displacement:</B>Scalar parameter that controls the amount of dispalcement in the turbulance.</LI>
+
+<BR><BR><H4>Hologram Shader 1: Assigned to Cylinder Mesh</H4>
+<P>Generate Z-Gradient to drive Scaling of the mesh in the shader, for activation/deactivation.</P>
+<B>Node Network to generate z-gradient</B>
+<img src="{{ site.baseurl }}/{{page.img_path}}/zgradient_nodes.png" width="1024">
+<B>Node Network to control scaling/Expansion</B>
+<img src="{{ site.baseurl }}/{{page.img_path}}/dimensionscaling_nodes.png" width="1024">
+<p>The result from the z-gradient is used to drive the WorldPosition offset logic that controls the height and expansion of the cylinder.</p>
+<p>The <B>Activation</B> parameter is a scalar value that controls the height of the cylinder (0 = squished, 1 = fully expanded height)</p>
+<p>The <B>spreadfactor</B> parameter is a scalar value that controls the radius spread of the top part of the cylinder(Ths is in world units)</p>
+<p>You can see the result from tweaking these two parameters below</p>
+ <img src="{{ site.baseurl }}/{{page.img_path}}/gradientscaling.gif" width="512">
+
+ <H4>Adding Turbulance to WorldPosition Offset for Glitchiness </H4>
+<p>Next we generate psuedorandom noise in screen space and use it to add some Turbulance to the WorldPosition Offset to create some glitchiness. The setup is shown below</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/turbulance_nodes.png" width="1024">
+<P><B>TurbulanceAmt</B> is a scalar parameter that controls how much turbulance is present(0=no turbulance, 1 = full turbulance)</P>
+<p><B>Turbulance_Dispalcement</B> controls how extreme the dispalcement is.(This value is in world units)</p>
+<p>The result from this gets added to the resut from Scaling/Expansion and that creates teh final output for the WorldPositionOffset of the Shader.</p>
+<B>ScreenSpace 2D Noise Visualized</B><BR>
+<img src="{{ site.baseurl }}/{{page.img_path}}/2DNoiseVisualize.gif" width="350"><BR><BR>
+<B>Final WorldPositionOffset Result</B><BR>
+<img src="{{ site.baseurl }}/{{page.img_path}}/WPO.gif" width="350">
+<p>It looks weird now, but once we add the look-dev, it works quite well</p>
+
+<H3>Look Development</H3>
+<H4>Screen Space Parallel Bars </H4>
+<P>We use a little bit of UV math to create screen space panning parallel bars, we also do some math with the camera position and object position to make sure that the screen space bar's continue tiling consistently regardless of distance from the screen</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/ScreenSpaceBars.png" width="512"><BR>
+<p>If you preview the result from this network, it will look like this(I preview it by wiring it into the basecolor,opacity and emissive)</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/bars.gif" width="512">
+
+<H4>Fresnel and CameraFade</H4>
+<p>Next we setup a fresnel and CameraFade that will later be used to drive the opacity.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/fresnelcamerafade.png" width="512"><BR><BR>
+<B>Fresnel Result</B><BR>
+<img src="{{ site.baseurl }}/{{page.img_path}}/fresnel.gif" width="350"><BR><BR>
+<B>CameraFade Result</B><BR>
+<img src="{{ site.baseurl }}/{{page.img_path}}/camerafade.gif" width="350"><BR><BR>
+
+<H4>Color and Opacity</H4>
+<p>Next we create the main graph network for the color, Emissive and Opacity, this is driven primarily by the result from the z-gradient and Activation Parameter, I combine it with the results from <B>ScreenSpace bars, Fresnel and CameraFade</B> for the final color,Emissive and Opacity.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/coloropacity.png" width="1024"><BR><BR>
+<p> The result from the DepthFade(DepthFade is to prevent hard clips through geometry) node goes into Opacity, and the result from the color multiply drives the emissive and the base color.</p>
+<p>The end result is this, with parameters to control activation,turbulance and spread.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/cylinderresult.gif" width="350">
+
+<H3>Hologram Shader 2: Assigned to Game Mesh</H3>
+<p>This shader will be pretty identical to the previous one assigned to the cylinder but with a few changes so that it works with complex meshes</p>
+<H4>WorldPosition Offset Setup for Activation</H4>
+<p>The setup below controls the scaling and Opacity</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/WPO_scope.png" width="1024">
+<p>The result from the z-gradient drives the opacity and the result from the WorldPosition Math drives the scaling of the Mesh.</p>
+<p>In this case when I generate the z-gradient I add 160(Height of the cylinder mesh) to the z-channel, this is so that the scaling happens within the scale of the base cylinder.</p>
+<p>by sliding the value of <B>Activation</B> from 0 - 2 you will see the following result.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/WPO_scope.gif" width="350">
+
+<H4>Turbulance</H4>
+<p style="color:red;">Note: The Rotation is handled in the BLueprint and is covered in the last section, doing the rotation in the shader resulted in some errors when doing the look development,because vertex normals weren't recalculated for the fresnel. More on that later.</p>
+<p>Next I add some math to create some turbulance.</p>
+<p>The turbulance section is very similar to what was done in the previous shader, we generate some screen space noise, and use it to distort the WorldPosition of the mesh.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/turbulancerotation.png" width="1024">
+
+<p>The Function <B>MF_FloatNoise2D</B> takes a vec2 and returns a psuedorandom float as the result.The node network for it is shown below.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/MF_FloatNoise2D.png" width="1024">
+<B>Screen Space Noise Visualized</B><BR>
+<img src="{{ site.baseurl }}/{{page.img_path}}/turbulancevisualize.gif" width="350">
+<p>Wiring the result from this network into the WorldPositionoffset, will look like this, we also have the <B>Turbulance_Amt</B> parameter which can be used to animate/control the turbulance as shown below</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/turbulancerotate.gif" width="350">
+
+<p> The result from the <B>Turbulance</B> section and the initial <b>z-gradient WorldPositonOffset</b> result gets added together to give us the final output that get's wired into the WorldPositionOffset input for the shader.</p>
+<p>Now, we have a setup with parameters to control activation as well as turbulance</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/finalwpo.gif" width="350">
+
+<H3>Look Development</H3>
+<p> This part is identical to what we did in the previous shader.</p>
+<p>One thing we could have done here, is used the <B>object's baked Normal Map</B> and used that to calculate the fresnel,this is nice because the baked normal gives us more surface details to work with, and thus results in a much more detailed fresnel, but I have avoided this here because I found it difficult to make this work with a re-usable Blueprint System, especially when sometimes meshes have multiple material ID's with multiple normal maps. So for now we just stick to using the <B>Vertex Normals.</B></p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/lookdev.png" width="1024">
+<p>The results from these networks gives us our Emissive Color and our opacity outputs.Now we have a shader with parameters to control <B>activation,turbulance and color.</B>>As you can see below.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/lookdevscope.gif" width="350">
+<img src="{{ site.baseurl }}/{{page.img_path}}/lookdevactivation.gif" width="350">
+<img src="{{ site.baseurl }}/{{page.img_path}}/lookdevturbulance.gif" width="350">
+<img src="{{ site.baseurl }}/{{page.img_path}}/lookdevcolor.gif" width="350">
+<p>Put both meshes together in the scene and try tweaking the activation parameter in the MPC.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/comp1.gif" width="350">
+
+<H3>Encapsulating into a Blueprint</H3>
+<p>Now i just set up a simple blueprint for ease of use.</p>
+<p>The BP has two parts, the <B>construction script</B> which handles bulk of the work, choosing meshes,materials,postioning etc and the <B>Event Graph</B> which will handle rotation during runtime.</p>
+<H5>Components and Variables</H5>
+<p>I expose certain variables, so that they can be tweaked in the editor</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/viewport.png" width="512"><BR><BR>
+
+
+
+<H4>Construction Script</H4>
+<p>The first part of the construction script creates the Dynamic Material Instances and assigns the material to the Cylinder Mesh</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/cs_p1.png" width="1024">
+<p>I wanted the BP to have the ability to pick between using a skeletal mesh with animation or a regular static mesh, the following sections set up the Mesh part</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/cs_p2.png" width="1024">
+<p>Continueing from the last section, sometimes meshes have multiple material id's, so we use a For Loop to cycle through all the Material Indexes and assign the Hologram Material to Each Part</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/cs_p3.png" width="1024">
+<p>Objects tend to have pivot inconsistant pivot locations, so we have a parameter available so that we can compensate for any offsets manually. We also use the objectbounds to calculate the <B>SpreadFactor</B> that is fed into the cylinder's Hologram Shader</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/cs_p4.png" width="1024">
+
+<H3>Event Graph </H3>
+<p>The event graph is only used if we enable mesh rotation, it is used to rotation the object at runtime.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/eventgraph.png" width="1024">
+
+<p>Now if we drop the Blueprint into the level and select it it should have all these parameters</p>
+
+<img src="{{ site.baseurl }}/{{page.img_path}}/parameters.png" width="512">
+
+<p>Now we have a blueprint that we can use to assign any mesh we have to use in the hologram system, we can choose to use a skeletal mesh with animations or just a regular StaticMesh. As well as parameters to control activation,turbulance etc.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/SkelHolo_opt.gif" width="350">
+<img src="{{ site.baseurl }}/{{page.img_path}}/holoskull.gif" width="350">
+<img src="{{ site.baseurl }}/{{page.img_path}}/SM_Holo1_opt.gif" width="350">
+<img src="{{ site.baseurl }}/{{page.img_path}}/SM_Holo2_opt.gif" width="350">
+
+[hampden]: https://github.com/jekyll/jekyll
