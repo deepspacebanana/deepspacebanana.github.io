@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Hologram Shader"
+title:  "Procedural Hologram Shader"
 date:   2018-02-22 16:54:46
 author: Admin
 categories: 
@@ -13,16 +13,94 @@ thumb: thumb02.jpg
 img_path: /../assets/img/blog/post12_img
 ---
 
-<P>Coming Soon..</P> <!--more-->
-<p>This was a small mini project I did during my free time, I wanted to try and recreate a simple crystal ball in UE4</p>
-Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line in section 1.10.32.
+<P>This was a quick little effect I came up with, to try and test some ideas I had for some Procedural Vertex Animation and a hacky technique for generating psuedorandom Vectors per face in the Shader. This would probably be infinitely easier to do if Unreal gave us access to Triangle,Vertex and Poly data in the Material Editor. But here's what I did.</P><!--more-->
 
-####Why do we use it?
-It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English.
+<p style="color:red;">Note: You can open the images in a new tab to view them at a higher resolution</p>
+
+<p><B>The main goal with this effect was to try and make the shader fully procedural.</B>It would probably be quite easy to recreate using textures.</P> 
+
+<img src="{{ site.baseurl }}/{{page.img_path}}/HoloSphere_01.gif" width="756">
+<img src="{{ site.baseurl }}/{{page.img_path}}/HoloSphere_02.gif" width="756">
+
+<H2>The Setup</H2>
+<p>This effect uses a simple sphere mesh with Split Edges as the base object. This is not really a reusable effect, as I was jsut experimenting.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/sphere.png" width="256">
+<img src="{{ site.baseurl }}/{{page.img_path}}/sphere.gif" width="256">
+
+<H2>Shader Setup</H2>
+<p>I n a nutshell, the shader basically displaces each face along it's normal, and the animation is driven by some math in the Shader. We also procedurally generate some psuedorandom Vec2 values per face of the object, we then use these per face values to have each face have some randommness in how muc hthey displace.</p>
+
+<H3>Generating Random Values Per Face</H3>
+<p>The Network below uses the VertexNormal with the <B>MF_Vec2Noise2D</B> function to generate some psuedorandom vec2 values per face on the model, Time is used in the Seed value so that the vec2 values randomly change over time. This Technique only works on simple concave/convex shapes which is why the shader, is not reusable. Perhaps there is some way to access some kind of PolygonID value using the Custom Node in unreal but I'm not familiar enough with Unreal's Rendering API to figure out how to do it.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/randomperface.png" width="1024">
+<p>The preview result looks like this</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/randomperface.gif" width="350">
+<p><B>MF_Vec2Noise2D</B> takes in a vec2 input and outputs a psuedorandom vec2 value from it. THe node network for the function can be seen below</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/MF_Vec2Noise2D.png" width="1024">
+
+<H3>World Position Offset</H3>
+<p>The network below uses a sphere mask, to drive displacement alongthe Vertex normal, using the Red Channel from the psuedorandom value generated previosuly to create soem variation in the displacement. The SineWave is jsut being used to preview, in the end we can jsut replace it with a scalar Parameter.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/WPO.png" width="1024">
+<p>If you wire the result from this into the world position output, you should see this result</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/WPO.gif" width="512">
+
+<H2>Look development</H2>
+
+<H3>Generate Procedural Grid using UV Coordinates</H3>
+<p>The tricky part here was getting the grid lines to line up perfectly with the edges on the mesh so that when each poly was dispalced outward they would have a perfect outline around them</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/grid.png" width="1024">
+<p>Multiplying the R and G channels of the UV coords iwth the X and Y subdivision of the sphere mesh, makes the grid lines match the number of edges on the mesh.If you preview the result form this network you will see it does.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/gridpre.png" width="350">
+
+<H3>Horizontal Paning Bar</H3>
+<p>This is done in localized world Space, could have jsut as easily used a Texture or used UV Coords to generate it.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/HorizontalPanningBar.png" width="2048">
+<p>The result from this network</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/panningbar.gif" width="350">
+
+<H3>Combining grid and Panning Bar</H3>
+<p>Next the Panning bar and Grid Results are combine together, by doing the following little bit of math</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/combine.png" width="756">
+<p>If you preview the result from the power node, you wil lsee this</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/grid.gif" width="350">
+<p>If you wire in the results from this network into their respective shader inputs, you will get something that looks like this.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/gridresult.gif" width="350">
+
+<H3>Random Opacity Curve</H3>
+<p>This section of the shader creates the opacity curve so that the ppoly's appear randomly as the form the sphere</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/baseopacity.png" width="1024">
+<p>Wire this into the opacity and you'll get this result</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/baseopacity.gif" width="512">
 
 
->Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).
+<H3>Creating an Opacity Curve for glow</H3>
+<p>If you look at the effect, you'll notice that the glow does something interesting, each face glows bright before it becomes fully visible</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/HoloSphere_V2.gif" width="512">
+<p>This is done by tweaking the opacity curve to have a quick bump as it almost reaches full value of 1.</p>
+<p>If we think of the opacity curve as a linear gradient over time, it'll look something like this.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/grad_01.png" width="512">
+<p>So what I we do is add a small bump around the 0.75 area where the value quickly climbs to 1</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/grad_02.png" width="512">
+<p>Now if we add these two curves together we will get a gradient that has a bump right before it hits a value of one</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/grad_03.png" width="512">
 
-There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even slightly believable.
+<p>so here's how we achieve that</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/glowcurve.png" width="1024">
+<p>If you preview the result from this network you will see this.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/glowcurve.gif" width="350">
+<p>As you can see it uses the result from the sinewave and the RandomFacevalue to isolate gradient curve as it hits a value of 0.85, and adds a quick bump to the curve</p>
+<p>The result from this network then gets added to the Opacity and Emissive sections as shown below to get teh final Effect.</p>
+<B>Opacity</B><BR><BR>
+<img src="{{ site.baseurl }}/{{page.img_path}}/Opacity_Final.png" width="756"><BR><BR>
+<B>Emissive</B><BR><BR>
+<img src="{{ site.baseurl }}/{{page.img_path}}/Emissive_Final.png" width="756">
+
+<p>And that gives us the final Effect, we can replace the sinewave with a Scalar Parameter and now we have a single Scalar parameter that controls the entire effect, the glow,opacity etc all work automatically.</p>
+
+<p>To conclude here is a variation of the effect, in this one I force all the Random face values to go from 0-1 so that the sphere is fully formed and isn't jsut partially formed.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/HoloSphere_01.gif" width="756">
+<img src="{{ site.baseurl }}/{{page.img_path}}/HoloSphere_02.gif" width="756">
+
+
 
 [hampden]: https://github.com/jekyll/jekyll
