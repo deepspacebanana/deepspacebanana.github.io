@@ -32,9 +32,9 @@ img_path: /../assets/img/blog/post12_img
 
 <H3>Generating Random Values Per Face</H3>
 <p>The Network below uses the VertexNormal with the <B>MF_Vec2Noise2D</B> function to generate some psuedorandom vec2 values per face on the model, Time is used in the Seed value so that the vec2 values randomly change over time. This Technique only works on simple concave/convex shapes which is why the shader, is not reusable. Perhaps there is some way to access some kind of PolygonID value using the Custom Node in unreal but I'm not familiar enough with Unreal's Rendering API to figure out how to do it.</p>
-<img src="{{ site.baseurl }}/{{page.img_path}}/randomperface.png" width="1024">
+<img src="{{ site.baseurl }}/{{page.img_path}}/Randomperface.png" width="1024">
 <p>The preview result looks like this</p>
-<img src="{{ site.baseurl }}/{{page.img_path}}/randomperface.gif" width="350">
+<img src="{{ site.baseurl }}/{{page.img_path}}/Randomperface.gif" width="350">
 <p><B>MF_Vec2Noise2D</B> takes in a vec2 input and outputs a psuedorandom vec2 value from it. THe node network for the function can be seen below</p>
 <img src="{{ site.baseurl }}/{{page.img_path}}/MF_Vec2Noise2D.png" width="1024">
 
