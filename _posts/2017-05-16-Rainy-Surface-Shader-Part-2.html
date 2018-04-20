@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Rainy SurfaceShader in UE4 Part 2"
-date:   2017-10-24 16:54:46
+date:   2018-04-19 16:54:46
 author: Admin
 categories: 
 - blog
@@ -10,18 +10,86 @@ categories:
 - Unreal Engine
 img: post05.gif
 thumb: thumb02.jpg
+img_path: /assets/img/blog/post09_img
 ---
 
-<P>Coming Soon..</P> <!--more-->
-<p>This was a small mini project I did during my free time, I wanted to try and recreate a simple crystal ball in UE4</p>
-Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line in section 1.10.32.
+<P>This is a continuation of the <A HREF="https://deepspacebanana.github.io/deepspacebanana.github.io/blog/shader/art/unreal%20engine/Rainy-Surface-Shader-Part-1">first part</A>, so if you havn't read that I recommend going through that first since this will continue where that left off, and you will need to be aware of that setup, so that you know how to combine both at the end..</P> <!--more-->
+<p>Just as a side not, as I was writing this post, i actually came up with an even simpler and easier to use solution for this rain system, using just one Post-Process Material, I will cover that some other time</p>
 
-####Why do we use it?
-It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English.
+<H3>Slope Awareness</H3>
+<p>So making the Function "slope aware" is actually incredibly simple, all we are doing is using a Z-gradient to blend betweek the Ripples Effect and the Streaking Effect that we create in this post.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/result.gif" width="350">
+<img src="{{ site.baseurl }}/{{page.img_path}}/post05.gif" width="350">
+<p>Below you can see simple way to get a z-gradient</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/z-gradient.png" width="1024">
+<p>The result looks like this</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/z-gradient.gif" width="350">
+<p>We use this result later to blend betweek the ripples and the water streaks</p>
+
+<H3>Texture Setup</H3>
+<p>So, if you remember the previous post, the texture setup we use is shown below, in this part we are going to make use of the Green and Blue Channels to make the water appear to drip.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/Texture_Packing.jpg" width="1024">
+<p>And the Normal Map</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/TextureNormal.png" width="256">
 
 
->Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).
 
-There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even slightly believable.
+
+<H3>Droplet Streaking Setup </H3>
+<p>For the streaking, all we are actually doing is setting the texture to be World Aligned along the xz and yz axis, and then panning the gradient texture in the blue channel to create some simple alpha eroision, that makes the drops appear to streak.</p>
+
+<p>First we create two input parameters, <B>Streaks_Tiling</B> and <B>Streak_Length</B>. <B>RainSpeed</B> was created in the last part, but it will be used for the streaking as well</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/input_parameters.png" width="512">
+
+<p>Next we set up the rain streaking texture to be world aligned along the xz and yz plane. We use the <B>Green Channel</B> which contains the streak pattern.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/worldalign.png" width="1024">
+<p>We use the same <B>RB</B> and <B>GB</B> outputs as the uv input for the normal map as well.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/normal.png" width="750">
+<p>The result will look like this</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/worldalign.gif" width="350">
+
+<p>Next we set up the world aligned panning setup for the gradient texture in the <B>Blue Channel</B></p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/gradientworldalign.png" width="1024">
+<p>The result has the texture mapped in world space and panning along the z-axis.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/gradientworldalign.gif" width="350">
+<p>Now we take the result from the panning gradient texture, do some math operations to it and then subtract it from the original world aligned streak texture in the Green channel.</p>
+<p>We also use the result from this to blend between a default normal color value and the World Aligned Normal Result</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/streaking.png" width="1024">
+<p>If you preview the result from the <B>StreakMask</B> and the <B>Normal</B> you will see the following results respectively</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/streakmask.gif" width="350">
+<img src="{{ site.baseurl }}/{{page.img_path}}/streaknormal.gif" width="350">
+<p>The panning gradient creates an alpha erosion effect, that creates the illusion of dripping water</p>
+<p>Note:There is a better solution for the Dripping water, I will cover that in one of my future posts.</p>
+
+<H3>Combining with Ripple Effect</H3>
+<p>Now all that's left to do is blend between this streaking effect and the ripple effect using the z-gradient we created earlier in the post</p>
+<p>This is the part where you will need to refer to the previous blog post, as we are essentially just adding a lerp for all the function outputs from the previous blog post, you can read it here</p>
+
+<p>Find the normal output taht was setup in the previous Post and add a linear interpolation between the ripple normal and the streak normal</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/normalblend.png" width="1024">
+
+<p>Do the same for the mask as well</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/maskblend.png" width="1024">
+<p>Note: The result from this output will now take the place of all hte places where the ripple mask was being used to blend, like <B>Basecolor,Metallic etc</B></p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/result.gif" width="512">
+
+<p>And that's it now you ahve a material function that can be layered to any existing shader to make it look like the surface is being rained on, with parameters to control ripple size, rainspeed etc.</p>
+<img src="{{ site.baseurl }}/{{page.img_path}}/MaterialFunction.png" width="512">
+
+<p>Here's a small test Environment I put together to show how the shader looks in a scene. All the materials used in the scene have the RainySurfaceMaterial function layered on them.</p>
+
+<img src="{{ site.baseurl }}/{{page.img_path}}/Cam1_opt.gif" width="512">
+<img src="{{ site.baseurl }}/{{page.img_path}}/Cam3_opt.gif" width="512">
+<img src="{{ site.baseurl }}/{{page.img_path}}/Cam4_opt.gif" width="512">
+<img src="{{ site.baseurl }}/{{page.img_path}}/Cam5_opt.gif" width="512">
+<img src="{{ site.baseurl }}/{{page.img_path}}/Cam6_opt.gif" width="512">
+
+
+
+
+
+
+
+
 
 [hampden]: https://github.com/jekyll/jekyll
