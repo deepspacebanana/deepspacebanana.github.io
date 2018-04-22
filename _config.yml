@@ -104,7 +104,7 @@ clients:
     img: client04.png
 
 # Short text about your company. Shown in footer on every page and also separately on Home and Contact page.
-about: "I am a Game Developer/Technical Artist, this website shocases some of my artwork,scripts and shaders. Feel free to contact me with any inquiries"
+about: "I am a Technical Artist.I have a passion for realtime graphics and video games, this website showcases some of my Tech Art work. Feel free to contact me with any inquiries"
 
 # Testimonial content. Shown on Home and About page.
 testimonial:
