@@ -13,16 +13,63 @@ thumb: thumb02.jpg
 img_path: /../assets/img/blog/post15_img
 ---
 
-<P>Coming Soon..</P> <!--more-->
-<p>This was a small mini project I did during my free time, I wanted to try and recreate a simple crystal ball in UE4</p>
-Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line in section 1.10.32.
+<P>This Post-Process effect came about after I saw this <A href="https://twitter.com/klemen_lozar/status/1017116328539217920">Tweet</A> from Klemen Lozar, it was neat little glitch effect, So I decided to take it a little further and try and make a Post0Process Glitch shader.</P> <!--more-->
+<p style="color:red;">Note: You can open the images in a new tab to view them at a higher resolution</p>
 
-####Why do we use it?
-It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English.
+<H4>Introduction</H4>
+<p>The Entire Shader is created procedurally and makes use of some of my Custom Noise Functions that I feature in my previous <A href="https://deepspacebanana.github.io/deepspacebanana.github.io/blog/shader/art/unreal%20engine/Glitch-Effects">Glitch Effects breakdown</A>, so be sure to read through that before following along with this one.</p>
 
+<P>The effect basically has three layers
+<OL>
+<LI> Pixellation<BR>
+<img src="{{ site.baseurl }}/{{page.img_path}}/pixellate.gif" width="350"> 
+<LI> RGB Offset<BR>
+<img src="{{ site.baseurl }}/{{page.img_path}}/offset.gif" width="350">
+<LI> Color noise (Vertical/Horizontal)<BR>
+<img src="{{ site.baseurl }}/{{page.img_path}}/colornoise.gif" width="350">
+</OL>
+</P>
 
->Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).
+<H4>Pixellation</H4>
+<P>This is a pretty common effect, it's basically a UV trick where we multiple the UV's with a resolution amount, round the values down so that each cell determined by resolution value only samples a single pixel to create the pixellated look, the lower the "Resolution" the more low-res it looks. We add one extra step to this we multiple the Resolution value by a psuedorandom scalar value, so that the resolution value varies over time to feel more glitch like. We also create a Psuedorandom cell mask to mask out the glitch so that it only appears at certain times on certain parts of the screen.</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/pixellation_Whole.png" width="1024">
+<P>Make sure the <B>Scene Texture</B> Node is set to use PostProcessInput0</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/scenetexturesettings.png" width="350">
+<P>If you wire the result from the <B>Node Marked 1</B> directly into the Scene Textuer node you can see what the fully pixellated result looks like.</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/pixellate.gif" width="350">
+<P>The Pixellate Mask section basically uses the 2D Noise Function to create an Animated Black and White cell Mask in ScreenSpace that then Interpolates between regular Screen UV's and the Pixellated Screen UV's. If you plug the result from <B>Round Node Marked 3</B> directly into the emissive, You ucan see what the mask looks like</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/pixellatemask.gif" width="350">
+<P>Note that you can control the tiling of the mask by multiplying a scalar value with the U and V of the screen Coordinates, in this case I jsut left a default value of 3 for both, but you can create a parameter to control that as well.</P>
+<P> We then use it to Interpolate between the Regular Screen UV's and the Pixellated Screen Uv's and feed that to the SceneTexture UV Input, for the Final Result:</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/pixellate02.gif" width="350">
 
-There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even slightly believable.
+<H4>RGB Offset</H4>
+<P>The RGB offset is basically the same as what Klemen does in his shader, but instead of using a texture we use a psuedorandom cell noise function to drive the offset.</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/RGB_Offset.png" width="1024">
+<P>The network of nodes under the section <B>Offset Noise</B> basically uses the Screen UV's as input for the <B>MF_Vec2Noise2D</B> Function to generate some animated psuedorandom screenspace 2D CellNoise, we use this noise to offset the pixels of the screen, you can preview what this noise looks like by plugging in the result from <B>MF_Vec2Noise2D</B> into the emissive output:</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/cellnoise.gif" width="350">
+<P>We take the result from the Noise Function and then multiple it by 3 different values for the Red , Green and Blue Channles respectively, we then add each of these to the Result from the Pixellated Screen UVs to get three different Uv results that will drive the Red,Green and Blue Channel of the Screen Buffer. If you preview the result from the <B>MakeFlaot3</B> you'll see this.</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/offset_02.gif" width="350">
+<P>The section under <B>Pixellate Offset Mask</B> is basically the same thing that we did in the previous section, we are using the Noise function to generate a black an white cell mask which we will use to Interpolate between the Pixel Effect and the Offset Effect</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/offsetmask.gif" width="350">
+<P>The last thing to do in this section is to just interpolate between the Pixellated Scene Texture Result and the Offset Scene Texture result using the PixelOffset Mask</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/pixeloffset.gif" width="350">
 
+<H4>RGB Color Noise </H4>
+<P>This last section deals with adding some horizontal and vertical color streaks to try and mimic the glitchy effects you would see in old cable TV's when the signal was messy. Here too we make use of our handy Custom Noise Functions</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/colornoise.png" width="1024">
+<P>The <B>ColorGlitchMask</B> section does the same thing as teh previous two sections it creates a black and white cell mask, that we will use later to mask out the areas where the RGB Color Streaks show.</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/mask03.gif" width="350">
+<P>The two sections at the bottom <B>CellNoise</B> and <B>HorizontalStreak</B> use the <B>MF_Vec3Noise3</B> function to generate some screen space color(Vector3) noise as shown below respectively</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/cellnoiseanimated.gif" width="350">
+<img src="{{ site.baseurl }}/{{page.img_path}}/horizontalnoise.gif" width="350">
+<P>The <B>VerticalMsk and Horizaontal Mask</B> sections are very similar to the previous mask we have created, in that they generate animated screen space Masks, in this case we isolate the V and U respectively to get Vertical Lines and Horizontal Lines as shown below</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/verticalline.gif" width="350">
+<img src="{{ site.baseurl }}/{{page.img_path}}/horizontalline.gif" width="350">
+<P>We then multiple the VerticleLine Mask with the result from cellnoise, and the result from the HorizontalLine Mask with the result from the horizontal Streak section and add both together before multiplying it with the overall <B>GlitchColorMask</B> which gives us the Final Result for the color Streaking</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/streaking.gif" width="350">
+<P>The Last thing to do is take the result from the RGB Color Noise Section and Add it to the result from the last two sections to give us the Final Result, You can see the Entire Network Below</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/Fullnetwork.png" width="1024">
+<P>And the Final Result</P>
+<img src="{{ site.baseurl }}/{{page.img_path}}/Final.gif" width="350">
 [hampden]: https://github.com/jekyll/jekyll
