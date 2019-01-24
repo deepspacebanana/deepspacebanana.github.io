@@ -4,18 +4,18 @@
         {% if include.title %}<h3>{{ include.title }}</h3>{% endif %}
         <div class="recentitems portfolio">
             {% for project in site.posts or site.projects limit:include.limit %}
+              <a href="{{  project.url | prepend: site.baseurl }}" data-animate="fadeInUp">
                 <div class="portfolio-item graphic-design">
                     <div class="he-wrap tpl6">
                     <img src="{{ "/assets/img/blog/" | prepend: site.baseurl }}{{ project.img }}" style="width:450px;height:300px;object-fit:cover;" alt="">
                         <div class="he-view">
                             <div class="bg a0" data-animate="fadeIn">
                                 <h3 class="a1" data-animate="fadeInDown">{{ project.title }}</h3>
-                                <a data-rel="prettyPhoto" href="{{ "/assets/img/project/" | prepend: site.baseurl }}{{ project.img }}" class="dmbutton a2" data-animate="fadeInUp"><i class="fa fa-search"></i></a>
-                                <a href="{{  project.url | prepend: site.baseurl }}" class="dmbutton a2" data-animate="fadeInUp"><i class="fa fa-link"></i></a>
                             </div><!-- he bg -->
                         </div><!-- he view -->
                     </div><!-- he wrap -->
                 </div><!-- end col-12 -->
+              </a>
             {% endfor %}
         </div><!-- portfolio -->
     </div><!-- portfolio container -->
@@ -27,7 +27,7 @@
 	{% endfor %}
 		<a class="button active" data-filter="*">All</a>
 </div> -->
-	
+
 	<!--<div class="navbar-collapse collapse navbar-left">
 	<div class="button-group filter-button-group">
       <ul class="nav navbar-nav">
@@ -36,7 +36,7 @@
 	  	<li><a class="button" data-filter=".{{ category | first }}">{{ category | first }}</a></li>
 		{% endfor %}
       </ul>
-	</div>  
+	</div>
     </div><!--/.nav-collapse -->
 
 <!--<div id="portfoliowrap">
@@ -46,7 +46,7 @@
 		<div class="grid">
 		<!--{% assign sorted-posts = site.posts | where: "categories","Art" %}-->
             <!--{% for post in site.posts limit:include.limit %}
-			<div class="element-item {{ post.categories | first }}"> 
+			<div class="element-item {{ post.categories | first }}">
                 <div class="portfolio-item graphic-design">
                     <div class="he-wrap tpl6">
                     <img src="{{ "/assets/img/blog/" | prepend: site.baseurl }}{{ post.img }}" alt="" style="object-fit:cover ;height:300px; width:450px;">
@@ -73,7 +73,7 @@
 <script>
 // init Isotope
 var $grid = $('.grid').isotope({
-  	
+
   // options
 });
 // filter items on button click
