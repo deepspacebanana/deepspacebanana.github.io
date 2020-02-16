@@ -45,9 +45,9 @@ social:
 address:
   - lines:
     - taizyd@korambayil.com
-    - Savannah, GA United States
+    - Raleigh, NC United States
 email: taizyd@korambayil.com
- 
+
 
 
 ### GENERAL DATA FOR VARIOUS LOCATIONS ###
@@ -103,7 +103,7 @@ clients:
     img: client04.png
 
 # Short text about your company. Shown in footer on every page and also separately on Home and Contact page.
-about: "I am a Technical Artist.I have a passion for realtime graphics and video games, this website showcases some of my Tech Art work. Feel free to contact me with any inquiries"
+about: "I am a Technical Artist at Epic Games.I have a passion for realtime graphics and video games, this website showcases some of my Tech Art work. Feel free to contact me with any inquiries"
 
 # Testimonial content. Shown on Home and About page.
 testimonial:
